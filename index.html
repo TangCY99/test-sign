@@ -1,58 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Sign Language Recognition</title>
-    <base href="/" />
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, user-scalable=yes" />
-    <link rel="stylesheet" href="assets/style.css" />
-    <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
-    <link rel="shortcut icon" href="/assets/img/favicon.png" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teachable Machine Webcam Model</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+</head>
+<body>
+    <div>Teachable Machine Image Model</div>
+    <button type="button" onclick="init()">Start</button>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
 
-    <!-- Primary Meta Tags -->
-    <meta name="title" content="Sign Language Recognition" />
-    <meta name="description" content="Train a computer to recognize sign language." />
+    <script type="text/javascript">
+        const URL = "https://teachablemachine.withgoogle.com/models/dPtJ0CL0l/";
+        let model, webcam, labelContainer, maxPredictions;
 
-    <style>
-        body, html {
-            height: 100%;
-        }
-
-        tm-classifier-drawer .error-message {
-            font-weight: bold;
-            color: #e05534;
-        }
-    </style>
-
-    <script>
-        // Load the model
-        async function loadModel() {
-            const modelURL = 'https://raw.githubusercontent.com/TangCY99/test-sign/main/model.json';
-            const metadataURL = 'https://raw.githubusercontent.com/TangCY99/test-sign/main/metadata.json';
-            const weightsURL = 'https://raw.githubusercontent.com/TangCY99/test-sign/main/weights.json';
-
+        async function init() {
             try {
-                const model = await tmImage.load(modelURL, metadataURL);
-                console.log("Model loaded successfully");
-                return model;
+                const modelURL = URL + "model.json";
+                const metadataURL = URL + "metadata.json";
+
+                // Load the model and metadata
+                model = await tmImage.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
+
+                // Setup webcam
+                const flip = true;
+                webcam = new tmImage.Webcam(200, 200, flip);
+                await webcam.setup(); // Request access to the webcam
+                await webcam.play();  // Play the webcam stream
+                window.requestAnimationFrame(loop);
+
+                // Append elements to the DOM
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+                labelContainer = document.getElementById("label-container");
+                for (let i = 0; i < maxPredictions; i++) {
+                    labelContainer.appendChild(document.createElement("div"));
+                }
             } catch (error) {
-                console.error("Error loading model: ", error);
+                console.error("Error loading model or setting up webcam: ", error);
+                alert("There was an error initializing the model or accessing the webcam. Please check the console for details.");
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async function () {
-            const model = await loadModel();
-            // Further code to handle webcam and predictions goes here
-        });
-    </script>
-</head>
+        async function loop() {
+            webcam.update(); // Update the webcam frame
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
 
-<body>
-    <div id="unsupported-msg" class="unsupported-msg" aria-hidden="true">
-        <h2>Sorry… This feature isn’t supported here :(</h2>
-        <p>Your browser or device doesn’t support this feature.</p>
-    </div>
-    <!-- Feedback API -->
-    <script type="text/javascript" src="https://support.google.com/inapp/api.js"></script>
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+            }
+        }
+    </script>
 </body>
 </html>
