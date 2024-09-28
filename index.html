@@ -1,45 +1,58 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="assets/style.css">
     <title>Sign Language Recognition</title>
-</head>
-<body>
-    <h1>Sign Language Recognition</h1>
-    <video id="webcam" autoplay></video>
-    <div id="result"></div>
-    <script src="dist/models.bundle.js"></script>
-    <script src="js/api.js"></script>
+    <base href="/" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=yes" />
+    <link rel="stylesheet" href="assets/style.css" />
+    <script type="text/javascript" src="https://apis.google.com/js/api.js"></script>
+    <link rel="shortcut icon" href="/assets/img/favicon.png" />
+
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="Sign Language Recognition" />
+    <meta name="description" content="Train a computer to recognize sign language." />
+
+    <style>
+        body, html {
+            height: 100%;
+        }
+
+        tm-classifier-drawer .error-message {
+            font-weight: bold;
+            color: #e05534;
+        }
+    </style>
+
     <script>
-        let model;
-        let webcam;
-
+        // Load the model
         async function loadModel() {
-            model = await tf.loadGraphModel('model.json'); // Adjust path if necessary
-            console.log('Model loaded');
+            const modelURL = 'https://raw.githubusercontent.com/TangCY99/test-sign/main/model.json';
+            const metadataURL = 'https://raw.githubusercontent.com/TangCY99/test-sign/main/metadata.json';
+            const weightsURL = 'https://raw.githubusercontent.com/TangCY99/test-sign/main/weights.json';
+
+            try {
+                const model = await tmImage.load(modelURL, metadataURL);
+                console.log("Model loaded successfully");
+                return model;
+            } catch (error) {
+                console.error("Error loading model: ", error);
+            }
         }
 
-        async function startWebcam() {
-            webcam = await navigator.mediaDevices.getUserMedia({ video: true });
-            document.getElementById('webcam').srcObject = webcam;
-
-            // Additional logic for processing frames and predicting
-            const video = document.getElementById('webcam');
-            const resultDiv = document.getElementById('result');
-
-            // Example prediction loop (adjust as needed)
-            setInterval(async () => {
-                const predictions = await model.executeAsync(tf.browser.fromPixels(video));
-                resultDiv.innerHTML = `Prediction: ${predictions}`;
-            }, 1000); // Update every second
-        }
-
-        window.onload = async () => {
-            await loadModel();
-            await startWebcam();
-        };
+        document.addEventListener('DOMContentLoaded', async function () {
+            const model = await loadModel();
+            // Further code to handle webcam and predictions goes here
+        });
     </script>
+</head>
+
+<body>
+    <div id="unsupported-msg" class="unsupported-msg" aria-hidden="true">
+        <h2>Sorry… This feature isn’t supported here :(</h2>
+        <p>Your browser or device doesn’t support this feature.</p>
+    </div>
+    <!-- Feedback API -->
+    <script type="text/javascript" src="https://support.google.com/inapp/api.js"></script>
 </body>
 </html>
